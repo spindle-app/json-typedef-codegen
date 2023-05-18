@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-pub type Root = GeojsonObject;
+pub type Root = Box<GeojsonObject>;
 
 /// A GeoJSON object MAY have a member named "bbox" to include information
 /// on the coordinate range for its Geometries, Features, or
@@ -147,7 +147,7 @@ pub struct GeojsonObjectFeature {
     /// member to be any GeoJSON object type other than one of the
     /// geometry types.
     #[serde(rename = "geometry")]
-    pub geometry: Option<GeojsonObject>,
+    pub geometry: Option<Box<GeojsonObject>>,
 
     #[serde(rename = "properties")]
     pub properties: HashMap<String, Option<Value>>,
@@ -165,7 +165,7 @@ pub struct GeojsonObjectFeature {
 #[derive(Serialize, Deserialize)]
 pub struct GeojsonObjectFeatureCollection {
     #[serde(rename = "features")]
-    pub features: Vec<GeojsonObject>,
+    pub features: Vec<Box<GeojsonObject>>,
 }
 
 /// A GeoJSON object with type "GeometryCollection" is a Geometry
@@ -198,7 +198,7 @@ pub struct GeojsonObjectFeatureCollection {
 #[derive(Serialize, Deserialize)]
 pub struct GeojsonObjectGeometryCollection {
     #[serde(rename = "geometries")]
-    pub geometries: Vec<GeojsonObject>,
+    pub geometries: Vec<Box<GeojsonObject>>,
 
     #[serde(rename = "bbox")]
     #[serde(skip_serializing_if = "Option::is_none")]
