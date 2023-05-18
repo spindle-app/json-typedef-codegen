@@ -29,8 +29,8 @@ pub type NotnullRefNullString = NullString;
 
 pub type NotnullString = String;
 
-pub type NullRefNotnullString = Option<Box<NotnullString>>;
+pub type NullRefNotnullString = Option<NotnullString>;
 
-pub type NullRefNullString = Option<Box<NullString>>;
+pub type NullRefNullString = Option<NullString>;
 
-pub type NullString = Option<Box<String>>;
+pub type NullString = Option<String>;
