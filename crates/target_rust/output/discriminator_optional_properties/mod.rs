@@ -13,9 +13,9 @@ pub enum Root {
 pub struct RootBar {
     #[serde(rename = "baz")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub baz: Option<Box<Vec<String>>>,
+    pub baz: Option<Vec<String>>,
 
     #[serde(rename = "quux")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub quux: Option<Box<bool>>,
+    pub quux: Option<bool>,
 }
