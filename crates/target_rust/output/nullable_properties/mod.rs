@@ -17,4 +17,4 @@ pub struct Root0 {
     pub quux: Vec<bool>,
 }
 
-pub type Root = Option<Box<Root0>>;
+pub type Root = Option<Root0>;

@@ -1,4 +1,4 @@
-FROM rust:1.49
+FROM rust:1.67
 
 ARG MAIN
 

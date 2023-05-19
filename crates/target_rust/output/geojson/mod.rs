@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
-pub type Root = GeojsonObject;
+pub type Root = Box<GeojsonObject>;
 
 /// A GeoJSON object MAY have a member named "bbox" to include information
 /// on the coordinate range for its Geometries, Features, or
@@ -165,7 +165,7 @@ pub struct GeojsonObjectFeature {
 #[derive(Serialize, Deserialize)]
 pub struct GeojsonObjectFeatureCollection {
     #[serde(rename = "features")]
-    pub features: Vec<GeojsonObject>,
+    pub features: Vec<Box<GeojsonObject>>,
 }
 
 /// A GeoJSON object with type "GeometryCollection" is a Geometry
@@ -198,11 +198,11 @@ pub struct GeojsonObjectFeatureCollection {
 #[derive(Serialize, Deserialize)]
 pub struct GeojsonObjectGeometryCollection {
     #[serde(rename = "geometries")]
-    pub geometries: Vec<GeojsonObject>,
+    pub geometries: Vec<Box<GeojsonObject>>,
 
     #[serde(rename = "bbox")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bbox: Option<Box<BoundingBox>>,
+    pub bbox: Option<BoundingBox>,
 }
 
 /// For type "LineString", the "coordinates" member is an array of two
@@ -214,7 +214,7 @@ pub struct GeojsonObjectLineString {
 
     #[serde(rename = "bbox")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bbox: Option<Box<BoundingBox>>,
+    pub bbox: Option<BoundingBox>,
 }
 
 /// For type "MultiLineString", the "coordinates" member is an array of
@@ -226,7 +226,7 @@ pub struct GeojsonObjectMultiLineString {
 
     #[serde(rename = "bbox")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bbox: Option<Box<BoundingBox>>,
+    pub bbox: Option<BoundingBox>,
 }
 
 /// For type "MultiPoint", the "coordinates" member is an array of
@@ -238,7 +238,7 @@ pub struct GeojsonObjectMultiPoint {
 
     #[serde(rename = "bbox")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bbox: Option<Box<BoundingBox>>,
+    pub bbox: Option<BoundingBox>,
 }
 
 /// For type "MultiPolygon", the "coordinates" member is an array of
@@ -250,7 +250,7 @@ pub struct GeojsonObjectMultiPolygon {
 
     #[serde(rename = "bbox")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bbox: Option<Box<BoundingBox>>,
+    pub bbox: Option<BoundingBox>,
 }
 
 /// For type "Point", the "coordinates" member is a single position.
@@ -261,7 +261,7 @@ pub struct GeojsonObjectPoint {
 
     #[serde(rename = "bbox")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bbox: Option<Box<BoundingBox>>,
+    pub bbox: Option<BoundingBox>,
 }
 
 /// For type "Polygon", the "coordinates" member MUST be an array of
@@ -273,7 +273,7 @@ pub struct GeojsonObjectPolygon {
 
     #[serde(rename = "bbox")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bbox: Option<Box<BoundingBox>>,
+    pub bbox: Option<BoundingBox>,
 }
 
 /// To specify a constraint specific to Polygons, it is useful to
