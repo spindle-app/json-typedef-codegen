@@ -9,18 +9,11 @@ import (
 
 // A description for discriminator
 type RootDiscriminatorWithDescription struct {
-	Foo string
-
-	Bar RootDiscriminatorWithDescriptionBar
+	Value IRootDiscriminatorWithDescription `json:"-"`
 }
 
 func (v RootDiscriminatorWithDescription) MarshalJSON() ([]byte, error) {
-	switch v.Foo {
-	case "bar":
-		return json.Marshal(struct { T string `json:"foo"`; RootDiscriminatorWithDescriptionBar }{ v.Foo, v.Bar })
-	}
-
-	return nil, fmt.Errorf("bad Foo value: %s", v.Foo)
+	return json.Marshal(v.Value)
 }
 
 func (v *RootDiscriminatorWithDescription) UnmarshalJSON(b []byte) error {
@@ -29,21 +22,70 @@ func (v *RootDiscriminatorWithDescription) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var value IRootDiscriminatorWithDescription
 	var err error
+
 	switch t.T {
 	case "bar":
-		err = json.Unmarshal(b, &v.Bar)
+		var v RootDiscriminatorWithDescriptionBar
+		err = json.Unmarshal(b, &v)
+		value = v
 	default:
-		err = fmt.Errorf("bad Foo value: %s", t.T)
+		err = fmt.Errorf("RootDiscriminatorWithDescription: bad foo value: %q", t.T)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	v.Foo = t.T
+	v.Value = value
 	return nil
 }
+
+// IRootDiscriminatorWithDescription is an interface type that RootDiscriminatorWithDescription types implement.
+// It can be the following types:
+//
+// - [RootDiscriminatorWithDescriptionBar] (bar)
+//
+type IRootDiscriminatorWithDescription interface {
+	Foo() string
+	isRootDiscriminatorWithDescription()
+}
+
+func (RootDiscriminatorWithDescriptionBar) Foo() string { return "bar" }
+
+func (RootDiscriminatorWithDescriptionBar) isRootDiscriminatorWithDescription() {}
+
+func (v RootDiscriminatorWithDescriptionBar) MarshalJSON() ([]byte, error) {
+	type Alias RootDiscriminatorWithDescriptionBar
+	return json.Marshal(struct {
+		T string `json:"foo"`
+		Alias
+	}{
+		v.Foo(),
+		Alias(v),
+	})
+}
+
+func (v *RootDiscriminatorWithDescriptionBar) UnmarshalJSON(b []byte) error {
+	type Alias RootDiscriminatorWithDescriptionBar
+	var a struct {
+		T string `json:"foo"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "bar" {
+		return fmt.Errorf("RootDiscriminatorWithDescriptionBar: bad foo value: %q", a.T)
+	}
+
+	*v = RootDiscriminatorWithDescriptionBar(a.Alias)
+	return nil
+}
+
 
 // A description for discriminator variant
 type RootDiscriminatorWithDescriptionBar struct {

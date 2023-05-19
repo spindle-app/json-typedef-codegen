@@ -96,50 +96,11 @@ type BoundingBox = []float64
 //     GeoJSON processors MAY interpret Geometry objects with empty
 //     "coordinates" arrays as null objects.
 type GeojsonObject struct {
-	Type string
-
-	Feature GeojsonObjectFeature
-
-	FeatureCollection GeojsonObjectFeatureCollection
-
-	GeometryCollection GeojsonObjectGeometryCollection
-
-	LineString GeojsonObjectLineString
-
-	MultiLineString GeojsonObjectMultiLineString
-
-	MultiPoint GeojsonObjectMultiPoint
-
-	MultiPolygon GeojsonObjectMultiPolygon
-
-	Point GeojsonObjectPoint
-
-	Polygon GeojsonObjectPolygon
+	Value IGeojsonObject `json:"-"`
 }
 
 func (v GeojsonObject) MarshalJSON() ([]byte, error) {
-	switch v.Type {
-	case "Feature":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectFeature }{ v.Type, v.Feature })
-	case "FeatureCollection":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectFeatureCollection }{ v.Type, v.FeatureCollection })
-	case "GeometryCollection":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectGeometryCollection }{ v.Type, v.GeometryCollection })
-	case "LineString":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectLineString }{ v.Type, v.LineString })
-	case "MultiLineString":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectMultiLineString }{ v.Type, v.MultiLineString })
-	case "MultiPoint":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectMultiPoint }{ v.Type, v.MultiPoint })
-	case "MultiPolygon":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectMultiPolygon }{ v.Type, v.MultiPolygon })
-	case "Point":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectPoint }{ v.Type, v.Point })
-	case "Polygon":
-		return json.Marshal(struct { T string `json:"type"`; GeojsonObjectPolygon }{ v.Type, v.Polygon })
-	}
-
-	return nil, fmt.Errorf("bad Type value: %s", v.Type)
+	return json.Marshal(v.Value)
 }
 
 func (v *GeojsonObject) UnmarshalJSON(b []byte) error {
@@ -148,37 +109,366 @@ func (v *GeojsonObject) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var value IGeojsonObject
 	var err error
+
 	switch t.T {
 	case "Feature":
-		err = json.Unmarshal(b, &v.Feature)
+		var v GeojsonObjectFeature
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "FeatureCollection":
-		err = json.Unmarshal(b, &v.FeatureCollection)
+		var v GeojsonObjectFeatureCollection
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "GeometryCollection":
-		err = json.Unmarshal(b, &v.GeometryCollection)
+		var v GeojsonObjectGeometryCollection
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "LineString":
-		err = json.Unmarshal(b, &v.LineString)
+		var v GeojsonObjectLineString
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "MultiLineString":
-		err = json.Unmarshal(b, &v.MultiLineString)
+		var v GeojsonObjectMultiLineString
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "MultiPoint":
-		err = json.Unmarshal(b, &v.MultiPoint)
+		var v GeojsonObjectMultiPoint
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "MultiPolygon":
-		err = json.Unmarshal(b, &v.MultiPolygon)
+		var v GeojsonObjectMultiPolygon
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "Point":
-		err = json.Unmarshal(b, &v.Point)
+		var v GeojsonObjectPoint
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "Polygon":
-		err = json.Unmarshal(b, &v.Polygon)
+		var v GeojsonObjectPolygon
+		err = json.Unmarshal(b, &v)
+		value = v
 	default:
-		err = fmt.Errorf("bad Type value: %s", t.T)
+		err = fmt.Errorf("GeojsonObject: bad type value: %q", t.T)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	v.Type = t.T
+	v.Value = value
 	return nil
 }
+
+// IGeojsonObject is an interface type that GeojsonObject types implement.
+// It can be the following types:
+//
+// - [GeojsonObjectFeature] (Feature)
+// - [GeojsonObjectFeatureCollection] (FeatureCollection)
+// - [GeojsonObjectGeometryCollection] (GeometryCollection)
+// - [GeojsonObjectLineString] (LineString)
+// - [GeojsonObjectMultiLineString] (MultiLineString)
+// - [GeojsonObjectMultiPoint] (MultiPoint)
+// - [GeojsonObjectMultiPolygon] (MultiPolygon)
+// - [GeojsonObjectPoint] (Point)
+// - [GeojsonObjectPolygon] (Polygon)
+//
+type IGeojsonObject interface {
+	Type() string
+	isGeojsonObject()
+}
+
+func (GeojsonObjectFeature) Type() string { return "Feature" }
+func (GeojsonObjectFeatureCollection) Type() string { return "FeatureCollection" }
+func (GeojsonObjectGeometryCollection) Type() string { return "GeometryCollection" }
+func (GeojsonObjectLineString) Type() string { return "LineString" }
+func (GeojsonObjectMultiLineString) Type() string { return "MultiLineString" }
+func (GeojsonObjectMultiPoint) Type() string { return "MultiPoint" }
+func (GeojsonObjectMultiPolygon) Type() string { return "MultiPolygon" }
+func (GeojsonObjectPoint) Type() string { return "Point" }
+func (GeojsonObjectPolygon) Type() string { return "Polygon" }
+
+func (GeojsonObjectFeature) isGeojsonObject() {}
+func (GeojsonObjectFeatureCollection) isGeojsonObject() {}
+func (GeojsonObjectGeometryCollection) isGeojsonObject() {}
+func (GeojsonObjectLineString) isGeojsonObject() {}
+func (GeojsonObjectMultiLineString) isGeojsonObject() {}
+func (GeojsonObjectMultiPoint) isGeojsonObject() {}
+func (GeojsonObjectMultiPolygon) isGeojsonObject() {}
+func (GeojsonObjectPoint) isGeojsonObject() {}
+func (GeojsonObjectPolygon) isGeojsonObject() {}
+
+func (v GeojsonObjectFeature) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectFeature
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectFeature) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectFeature
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "Feature" {
+		return fmt.Errorf("GeojsonObjectFeature: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectFeature(a.Alias)
+	return nil
+}
+
+func (v GeojsonObjectFeatureCollection) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectFeatureCollection
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectFeatureCollection) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectFeatureCollection
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "FeatureCollection" {
+		return fmt.Errorf("GeojsonObjectFeatureCollection: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectFeatureCollection(a.Alias)
+	return nil
+}
+
+func (v GeojsonObjectGeometryCollection) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectGeometryCollection
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectGeometryCollection) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectGeometryCollection
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "GeometryCollection" {
+		return fmt.Errorf("GeojsonObjectGeometryCollection: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectGeometryCollection(a.Alias)
+	return nil
+}
+
+func (v GeojsonObjectLineString) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectLineString
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectLineString) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectLineString
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "LineString" {
+		return fmt.Errorf("GeojsonObjectLineString: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectLineString(a.Alias)
+	return nil
+}
+
+func (v GeojsonObjectMultiLineString) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectMultiLineString
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectMultiLineString) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectMultiLineString
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "MultiLineString" {
+		return fmt.Errorf("GeojsonObjectMultiLineString: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectMultiLineString(a.Alias)
+	return nil
+}
+
+func (v GeojsonObjectMultiPoint) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectMultiPoint
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectMultiPoint) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectMultiPoint
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "MultiPoint" {
+		return fmt.Errorf("GeojsonObjectMultiPoint: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectMultiPoint(a.Alias)
+	return nil
+}
+
+func (v GeojsonObjectMultiPolygon) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectMultiPolygon
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectMultiPolygon) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectMultiPolygon
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "MultiPolygon" {
+		return fmt.Errorf("GeojsonObjectMultiPolygon: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectMultiPolygon(a.Alias)
+	return nil
+}
+
+func (v GeojsonObjectPoint) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectPoint
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectPoint) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectPoint
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "Point" {
+		return fmt.Errorf("GeojsonObjectPoint: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectPoint(a.Alias)
+	return nil
+}
+
+func (v GeojsonObjectPolygon) MarshalJSON() ([]byte, error) {
+	type Alias GeojsonObjectPolygon
+	return json.Marshal(struct {
+		T string `json:"type"`
+		Alias
+	}{
+		v.Type(),
+		Alias(v),
+	})
+}
+
+func (v *GeojsonObjectPolygon) UnmarshalJSON(b []byte) error {
+	type Alias GeojsonObjectPolygon
+	var a struct {
+		T string `json:"type"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "Polygon" {
+		return fmt.Errorf("GeojsonObjectPolygon: bad type value: %q", a.T)
+	}
+
+	*v = GeojsonObjectPolygon(a.Alias)
+	return nil
+}
+
 
 // A Feature object represents a spatially bounded thing.  Every
 // Feature object is a GeoJSON object no matter where it occurs in a
