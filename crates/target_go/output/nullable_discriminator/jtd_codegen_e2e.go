@@ -8,22 +8,11 @@ import (
 )
 
 type Root0 struct {
-	Foo string
-
-	Bar RootBar
-
-	Quux RootQuux
+	Value IRoot0 `json:"-"`
 }
 
 func (v Root0) MarshalJSON() ([]byte, error) {
-	switch v.Foo {
-	case "bar":
-		return json.Marshal(struct { T string `json:"foo"`; RootBar }{ v.Foo, v.Bar })
-	case "quux":
-		return json.Marshal(struct { T string `json:"foo"`; RootQuux }{ v.Foo, v.Quux })
-	}
-
-	return nil, fmt.Errorf("bad Foo value: %s", v.Foo)
+	return json.Marshal(v.Value)
 }
 
 func (v *Root0) UnmarshalJSON(b []byte) error {
@@ -32,23 +21,107 @@ func (v *Root0) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var value IRoot0
 	var err error
+
 	switch t.T {
 	case "bar":
-		err = json.Unmarshal(b, &v.Bar)
+		var v RootBar
+		err = json.Unmarshal(b, &v)
+		value = v
 	case "quux":
-		err = json.Unmarshal(b, &v.Quux)
+		var v RootQuux
+		err = json.Unmarshal(b, &v)
+		value = v
 	default:
-		err = fmt.Errorf("bad Foo value: %s", t.T)
+		err = fmt.Errorf("Root0: bad foo value: %q", t.T)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	v.Foo = t.T
+	v.Value = value
 	return nil
 }
+
+// IRoot0 is an interface type that Root0 types implement.
+// It can be the following types:
+//
+// - [RootBar] (bar)
+// - [RootQuux] (quux)
+//
+type IRoot0 interface {
+	Foo() string
+	isRoot0()
+}
+
+func (RootBar) Foo() string { return "bar" }
+func (RootQuux) Foo() string { return "quux" }
+
+func (RootBar) isRoot0() {}
+func (RootQuux) isRoot0() {}
+
+func (v RootBar) MarshalJSON() ([]byte, error) {
+	type Alias RootBar
+	return json.Marshal(struct {
+		T string `json:"foo"`
+		Alias
+	}{
+		v.Foo(),
+		Alias(v),
+	})
+}
+
+func (v *RootBar) UnmarshalJSON(b []byte) error {
+	type Alias RootBar
+	var a struct {
+		T string `json:"foo"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "bar" {
+		return fmt.Errorf("RootBar: bad foo value: %q", a.T)
+	}
+
+	*v = RootBar(a.Alias)
+	return nil
+}
+
+func (v RootQuux) MarshalJSON() ([]byte, error) {
+	type Alias RootQuux
+	return json.Marshal(struct {
+		T string `json:"foo"`
+		Alias
+	}{
+		v.Foo(),
+		Alias(v),
+	})
+}
+
+func (v *RootQuux) UnmarshalJSON(b []byte) error {
+	type Alias RootQuux
+	var a struct {
+		T string `json:"foo"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "quux" {
+		return fmt.Errorf("RootQuux: bad foo value: %q", a.T)
+	}
+
+	*v = RootQuux(a.Alias)
+	return nil
+}
+
 
 type RootBar struct {
 	Baz string `json:"baz"`

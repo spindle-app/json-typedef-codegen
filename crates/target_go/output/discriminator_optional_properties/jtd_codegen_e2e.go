@@ -8,18 +8,11 @@ import (
 )
 
 type Root struct {
-	Foo string
-
-	Bar RootBar
+	Value IRoot `json:"-"`
 }
 
 func (v Root) MarshalJSON() ([]byte, error) {
-	switch v.Foo {
-	case "bar":
-		return json.Marshal(struct { T string `json:"foo"`; RootBar }{ v.Foo, v.Bar })
-	}
-
-	return nil, fmt.Errorf("bad Foo value: %s", v.Foo)
+	return json.Marshal(v.Value)
 }
 
 func (v *Root) UnmarshalJSON(b []byte) error {
@@ -28,21 +21,70 @@ func (v *Root) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	var value IRoot
 	var err error
+
 	switch t.T {
 	case "bar":
-		err = json.Unmarshal(b, &v.Bar)
+		var v RootBar
+		err = json.Unmarshal(b, &v)
+		value = v
 	default:
-		err = fmt.Errorf("bad Foo value: %s", t.T)
+		err = fmt.Errorf("Root: bad foo value: %q", t.T)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	v.Foo = t.T
+	v.Value = value
 	return nil
 }
+
+// IRoot is an interface type that Root types implement.
+// It can be the following types:
+//
+// - [RootBar] (bar)
+//
+type IRoot interface {
+	Foo() string
+	isRoot()
+}
+
+func (RootBar) Foo() string { return "bar" }
+
+func (RootBar) isRoot() {}
+
+func (v RootBar) MarshalJSON() ([]byte, error) {
+	type Alias RootBar
+	return json.Marshal(struct {
+		T string `json:"foo"`
+		Alias
+	}{
+		v.Foo(),
+		Alias(v),
+	})
+}
+
+func (v *RootBar) UnmarshalJSON(b []byte) error {
+	type Alias RootBar
+	var a struct {
+		T string `json:"foo"`
+		Alias
+	}
+
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+
+	if a.T != "bar" {
+		return fmt.Errorf("RootBar: bad foo value: %q", a.T)
+	}
+
+	*v = RootBar(a.Alias)
+	return nil
+}
+
 
 type RootBar struct {
 	Baz []string `json:"baz,omitempty"`
